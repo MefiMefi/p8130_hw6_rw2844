@@ -11,8 +11,8 @@ library(viridis)
 library(cowplot)
 library(patchwork)
 library(modelr)
-library(p8105.datasets)
 knitr::opts_chunk$set(
+  echo = F,
   out.width = "100%"
 )
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
@@ -39,6 +39,9 @@ patsat_df %>% cor() %>% corrplot::corrplot(type = "upper", order = "hclust", tl.
 ```
 
 It seems that each predictor has a negative correlation with the outcome of interest.
+
+
+
 
 2. Fit a multiple regression model.
 
@@ -80,9 +83,53 @@ In our situation, $F_{stat} = 30.1>F_{0.95;~3,~42}=`r qf(0.95,3,42)`$
 
 So, we reject the null hypothesis with 95% confidence and conclude that at least one coefficient is not equal to zero.
 
+
+
+
 3. Show the regression results for all estimated slope coefficients with 95% CIs.
 
 ```{r patsat_ci}
-  
+patsat_ci = 
+  tibble(
+    broom::tidy(patsat_reg),
+    as_tibble(confint(patsat_reg))
+  ) %>% 
+  select(term, estimate, "2.5 %", "97.5 %")
+
+patsat_ci %>% 
+  knitr::kable(digits = 3)
 ```
 
+**Interpretation:**
+
+The 95% CI for severity of illness is $(-1.435,~0.551)$, that means at 95% confidence level, the mean 
+change of patient satisfaction given all the same except for severity of illness per unit is between $(-1.435,~0.551)$, noticing that 0 is in this interval.
+
+
+
+
+4. Obtain an interval estimate for a new patient’s satisfaction with Age=35, Severity=42, and Anxiety=2.1.
+
+The 95% PI for this new patient is :
+```{r patsat_int_est}
+predict(
+  patsat_reg,
+  tibble(age=35, severity=42, anxiety=2.1),
+  interval = "prediction"
+  ) %>% 
+  as_tibble() %>% 
+  select(lwr,upr) %>% 
+  knitr::kable(digits = 3)
+```
+
+**Interpretation:**
+
+This means at 95% confidence level, the true estimate of patient satisfaction is between $(50.062, 93.304)$.
+
+
+
+
+5. 
+  a) Test whether ‘anxiety level’ can be dropped from the regression model, given the other two covariates are retained.
+  
+  
