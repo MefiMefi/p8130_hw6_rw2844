@@ -1,0 +1,88 @@
+---
+title: "p8130_hw6_rw2844"
+author: "Renjie Wei"
+date: "11/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(viridis)
+library(cowplot)
+library(patchwork)
+library(modelr)
+library(p8105.datasets)
+knitr::opts_chunk$set(
+  out.width = "100%"
+)
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis",
+  digits = 3
+)
+scale_colour_discrete = scale_color_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+set.seed(2844)
+```
+
+# Problem 1
+
+
+1. Create a correlation matrix
+
+```{r read_patsatisfaction}
+patsat_df = 
+  read_csv("./data/PatSatisfaction.csv") %>% janitor::clean_names() %>% mutate(satisfaction = safisfaction) %>% select(satisfaction, everything(),-safisfaction)
+
+patsat_df %>% cor() %>% corrplot::corrplot(type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+```
+
+It seems that each predictor has a negative correlation with the outcome of interest.
+
+2. Fit a multiple regression model.
+
+```{r patsat_reg}
+patsat_reg =
+  lm(satisfaction ~ age + severity + anxiety, data = patsat_df)
+
+null_reg = 
+  lm(satisfaction ~ 1, data = patsat_df)
+```
+
+
+
+Let's set up the test hypotheses:
+
+$H_0~:~\beta_i = 0,~i = 1,2,3$ 
+
+$H_1 : at~least~one~of~the~coefficient~is~not~equal~to~0$
+
+And our model to be test is:
+$$Model_{test}:~Statisfaction=`r str_c(patsat_reg$coefficients %>% round(2),c("",patsat_reg$terms %>% attr("term.labels")),sep=" ") %>% paste(collapse = "")`$$
+
+We can test this model against the model only with intercept:
+
+$$Model_{null}:~Statisfaction=`r str_c(null_reg$coefficients %>% round(2),c("",null_reg$terms %>% attr("term.labels")),sep=" ") %>% paste(collapse = "")`$$
+
+And we do the ANOVA test:
+
+The F statistic is calculated by:
+$$F_{stat} = \frac{MSR}{MSE} \sim F_{p,~n-p-1},~where~p=3,~n=46$$
+```{r patsat_anova}
+anova(null_reg, patsat_reg)
+```
+
+**Decision Rules:**
+$Reject ~ H_0 ~ if ~ F_{stat}>F_{1-\alpha;~p,~n-p-1}$
+
+In our situation, $F_{stat} = 30.1>F_{0.95;~3,~42}=`r qf(0.95,3,42)`$
+
+So, we reject the null hypothesis with 95% confidence and conclude that at least one coefficient is not equal to zero.
+
+3. Show the regression results for all estimated slope coefficients with 95% CIs.
+
+```{r patsat_ci}
+  
+```
+
