@@ -133,3 +133,49 @@ This means at 95% confidence level, the true estimate of patient satisfaction is
   a) Test whether ‘anxiety level’ can be dropped from the regression model, given the other two covariates are retained.
   
   
+First, we set up the hypotheses:
+
+$H_0~:~\beta_{anxiety} = 0$
+
+$H_1~:~\beta_{anxiety} \ne 0$
+
+And we conduct the ANOVA test:
+
+$$F_{stat} = \frac{MSR(X3|X1X2)}{MSE(X1X2X3)} \sim F_{df_L - df_S,df_L},~where~df_L =43 ,~df_S =42 $$
+
+```{r patsat_drop}
+noanxi_reg = 
+   lm(satisfaction ~ .-anxiety, data = patsat_df)
+
+anova(noanxi_reg, patsat_reg)
+
+```
+
+**Decision Rules:**
+$Reject ~ H_0 ~ if ~ F_{stat}>F_{1-\alpha;df_L - df_S,df_L}$
+
+In our situation, $F_{stat} = 3.6<F_{0.95;~1,~42}=`r qf(0.95,1,42)`$
+
+So, we cannot reject the null hypothesis with 95% confidence and conclude that ‘anxiety level’ can be dropped from the regression model.
+
+
+  b) How are R2/R2-adjusted impacted
+  
+```{r rsq_comp}
+rsq_comp = 
+  tibble(
+    Model = c("With Anxiety","Without Anxiety"),
+    R_square = c(summary(patsat_reg)$r.square, summary(noanxi_reg)$r.square),
+    Adjusted_R_square = c(summary(patsat_reg)$adj.r.square, summary(noanxi_reg)$adj.r.square)
+  )
+
+rsq_comp %>% knitr::kable(digits = 3)
+```
+
+We can see that the R square and Adjusted R square are higher in model with anxiety level.
+
+
+
+
+
+# Problem 2

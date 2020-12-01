@@ -484,6 +484,51 @@ summary {
 <ol style="list-style-type: lower-alpha">
 <li>Test whether ‘anxiety level’ can be dropped from the regression model, given the other two covariates are retained.</li>
 </ol>
+<p>First, we set up the hypotheses:</p>
+<p><span class="math inline">\(H_0~:~\beta_{anxiety} = 0\)</span></p>
+<p><span class="math inline">\(H_1~:~\beta_{anxiety} \ne 0\)</span></p>
+<p>And we conduct the ANOVA test:</p>
+<p><span class="math display">\[F_{stat} = \frac{MSR(X3|X1X2)}{MSE(X1X2X3)} \sim F_{df_L - df_S,df_L},~where~df_L =43 ,~df_S =42 \]</span></p>
+<pre><code>## Analysis of Variance Table
+## 
+## Model 1: satisfaction ~ (age + severity + anxiety) - anxiety
+## Model 2: satisfaction ~ age + severity + anxiety
+##   Res.Df  RSS Df Sum of Sq   F Pr(&gt;F)  
+## 1     43 4613                          
+## 2     42 4249  1       364 3.6  0.065 .
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><strong>Decision Rules:</strong> <span class="math inline">\(Reject ~ H_0 ~ if ~ F_{stat}&gt;F_{1-\alpha;df_L - df_S,df_L}\)</span></p>
+<p>In our situation, <span class="math inline">\(F_{stat} = 3.6&lt;F_{0.95;~1,~42}=4.073\)</span></p>
+<p>So, we cannot reject the null hypothesis with 95% confidence and conclude that ‘anxiety level’ can be dropped from the regression model.</p>
+<ol start="2" style="list-style-type: lower-alpha">
+<li>How are R2/R2-adjusted impacted</li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Model</th>
+<th align="right">R_square</th>
+<th align="right">Adjusted_R_square</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">With Anxiety</td>
+<td align="right">0.682</td>
+<td align="right">0.659</td>
+</tr>
+<tr class="even">
+<td align="left">Without Anxiety</td>
+<td align="right">0.655</td>
+<td align="right">0.639</td>
+</tr>
+</tbody>
+</table>
+<p>We can see that the R square and Adjusted R square are higher in model with anxiety level.</p>
+</div>
+<div id="problem-2" class="section level1">
+<h1>Problem 2</h1>
 </div>
 
 
