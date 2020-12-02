@@ -2,7 +2,8 @@
 title: "p8130_hw6_rw2844"
 author: "Renjie Wei"
 date: "11/30/2020"
-output: html_document
+output: 
+  pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -179,3 +180,189 @@ We can see that the R square and Adjusted R square are higher in model with anxi
 
 
 # Problem 2
+
+
+
+
+
+1. Crude association between BMI and serum estradiol
+
+a) Scatter plot with regression line.
+
+```{r estra_scat}
+estradl_df  =
+  read_csv("data/ESTRADL.csv") %>%
+  janitor::clean_names() %>%
+  mutate(ethnic =case_when(ethnic == 1 ~ "African American", ethnic == 0 ~ "Caucasian"),
+         ethnic = as.factor(ethnic))
+
+
+estradl_df %>% 
+  ggplot(aes(x = bmi, y = estradl)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = F) +
+  labs(
+    title = "Regress Estradiol on BMI",
+    x = "BMI",
+    y = "Estradiol level"
+  )
+```
+
+**Comments:**
+
+As the plot shown above, the regression line has a very small slope, and the slope is negative. And there are some outliers when BMI is low.
+
+
+b) Regression output
+
+```{r estradl_reg_bmi}
+bmi_reg = 
+  estradl_df %>%
+  lm(estradl ~ bmi, data = .)
+
+bmi_reg %>% broom::tidy() %>% knitr::kable(digits = 3)
+```
+
+**Comments:**
+
+The coefficient of BMI is -0.453, and the p-value is 0.21. There is little evidence showing a strong relation ship between BMI and Estradiol level.
+
+
+
+2. Relationship between BMI and serum estradiol change after controlling for all the other risk factors
+
+```{r estradl_reg}
+estradl_reg = 
+  estradl_df %>% 
+  lm(estradl ~ .-id, data = .)
+
+estradl_reg %>% broom::tidy() %>% knitr::kable(digits = 3) 
+```
+
+**Comments:**
+
+The coefficient of BMI after controlling for all the other risk factors changed from -0.453 to -0.107, and the p-value changed from 0.21 to 0.774 The relationship between BMI and Estradiol level seems to be more insignificant after controlling.
+
+The p-value of `entage`, `nunchild`,`agemenar` and `bmi` are relatively high and there coefficient is small in magnitude, which implies there might not be a strong relationship between estradiol level. However, the p-value of `ethnicCaucasian` is small, and its coefficient is large in magnitude, there might be a relationship between ethnic and estradiol level.
+
+        
+
+
+3. Focus on BMI, ethnic and estradiol level
+
+a) Graphical displays and numerical summaries
+
+First I will draw a scatter plot about Estradiol level vs BMI by Ethnic:
+
+```{r ethn_bmi_plt}
+estradl_df %>% 
+  ggplot(aes(x = bmi, y = estradl, color = ethnic))+
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Scatterplot of Estradiol level vs BMI by Ethnic",
+    x = "BMI",
+    y = "Estradiol level"
+  )
+```
+
+From the plots, we can see a cross over two regression line, that is a indication of interactions between `BMI` and `ethnic`.
+
+Let's build a model with this interaction and see if it is significant.
+
+
+```{r interaction_reg}
+interaction_reg = 
+  lm(estradl ~ bmi * ethnic, data = estradl_df)
+
+summary(interaction_reg)
+```
+
+From the summary of the model, we can see that the interaction is significant. With p-value 0.0133.
+
+
+b) Additional steps
+
+Since there is a significant interaction, we need to do stratified analysis.
+
+```{r stratified_df, echo = T}
+caucasian_df = 
+  estradl_df %>% 
+  filter(ethnic == "Caucasian")
+
+aamerican_df = 
+  estradl_df %>% 
+  filter(ethnic == "African American")
+
+strat_reg_cau = lm(estradl ~ bmi, data = caucasian_df)
+strat_reg_aam = lm(estradl ~ bmi, data = aamerican_df)
+```
+
+So in Caucasian, a negative, relatively large in magnitude association b/w BMI and estradiol level
+
+```{r cau_reg}
+summary(strat_reg_cau)
+```
+
+
+And in African American, a positive association b/w BMI and estradiol level.
+
+
+```{r aam_reg}
+summary(strat_reg_aam)
+```
+
+However, both associations are not statistically significant.
+
+And to see if Ethnic is a confounder of BMI, it need to meet 3 conditions
+
+Condition 1) Associated with the outcome:
+```{r confonder_1}
+conf_1_reg = 
+  estradl_df %>% 
+  lm(estradl ~ ethnic, data = .)
+
+summary(conf_1_reg)
+```
+
+Yes, ethnic is associated with estradiol level with a very small p-value.
+
+
+Condition 2) Associated with the exposure:
+```{r confonder_2}
+conf_2_reg = 
+  estradl_df %>% 
+  lm(bmi ~ ethnic, data = .)
+
+
+summary(conf_2_reg)
+```
+
+Yes, ethnic is associated with BMI with a extreme small p-value.
+
+Condition 3) Not on the causal pathway b/w exposure and outcome, which is obvious.
+
+```{r control_reg}
+control_reg = 
+  estradl_df %>% 
+  lm(estradl~ bmi + ethnic, data = .)
+
+bmi_reg %>% broom::tidy() %>% knitr::kable()
+control_reg %>% broom::tidy() %>% knitr::kable()
+```
+
+And by comparing model controlling `ethnic` and not, we can see that the BMI coefficient reduced from -0.453 in SLR to -0.041 in MLR after adjusting for `ethnic` (~90% reduction). We can conclude that `ethnic` confounds the relationship b/w `BMI` and `estradiol level`.
+
+```{r boxplot_end}
+estradl_df %>% 
+  ggplot(aes(x = ethnic, y = estradl))+
+  geom_boxplot() + 
+  geom_point(aes(x = ethnic, y = mean(estradl)), color = "red") +
+  labs(
+    title = "Distribution of Estradiol level by Ethnic",
+    y = "Estradiol level",
+    x = "Ethnic"
+  )
+
+```
+
